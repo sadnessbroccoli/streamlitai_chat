@@ -38,10 +38,17 @@ st.markdown("### AI驱动的名人故事探索与对话")
 @st.cache_data
 def load_celebrities():
     try:
-        with open('data/celebrities.json', 'r', encoding='utf-8') as f:
+        # 1. 获取当前 app.py 所在的文件夹路径
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # 2. 拼接出正确的 json 文件路径
+        file_path = os.path.join(current_dir, 'data', 'celebrities.json')
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         return data['celebrities']
-    except:
+    except Exception as e:
+        # 这样如果报错，你可以在 Streamlit 页面看到具体的错误原因
+        st.error(f"加载失败，错误信息: {e}") 
         return []
 
 
