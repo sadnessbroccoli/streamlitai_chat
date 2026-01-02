@@ -1,4 +1,3 @@
-st.caption("🚀 version: 2026-01-03-01")
 import streamlit as st
 import json
 import pandas as pd
