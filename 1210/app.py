@@ -399,9 +399,12 @@ with st.sidebar:
     if st.button("随机对话"):
         import random
 
-        random_celebrity = random.choice(celebrities)
-        st.session_state.selected_celebrity = random_celebrity
-        st.rerun()
+        if not celebrities:
+            st.warning("暂无名人数据，无法随机对话")
+        else:
+            random_celebrity = random.choice(celebrities)
+            st.session_state.selected_celebrity = random_celebrity
+            st.rerun()
 
     if st.button("清空对话"):
         if "messages" in st.session_state:
