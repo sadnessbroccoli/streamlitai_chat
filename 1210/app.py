@@ -37,37 +37,43 @@ st.markdown("### AI驱动的名人故事探索与对话")
 # 加载数据
 @st.cache_data
 def load_celebrities():
-    # 获取当前 app.py 的绝对路径
-    current_file_dir = os.path.dirname(os.path.abspath(__file__))
+    # 强制尝试云端最可能的绝对路径
+    # Streamlit Cloud 默认路径格式：/mount/src/仓库名/文件夹/文件名
+    cloud_path = "/mount/src/streamlitai_chat/1210/data/celebrities.json"
+    local_path = os.path.join(os.path.dirname(__file__), "data", "celebrities.json")
     
-    # 定义所有可能的探测路径
-    # 路径1：云端标准路径 (1210/data/...)
-    # 路径2：基于文件位置的相对路径 (./data/...)
-    # 路径3：绝对根路径
-    possible_paths = [
-        os.path.join(current_file_dir, "data", "celebrities.json"),
-        os.path.join(os.getcwd(), "1210", "data", "celebrities.json"),
-        "1210/data/celebrities.json",
-        "data/celebrities.json"
-    ]
+    target_path = ""
+    if os.path.exists(cloud_path):
+        target_path = cloud_path
+    elif os.path.exists(local_path):
+        target_path = local_path
     
-    for path in possible_paths:
-        if os.path.exists(path):
-            try:
-                with open(path, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    # 只有确保拿到了数据才返回
-                    if data and "celebrities" in data:
-                        return data["celebrities"]
-            except Exception as e:
-                continue # 如果这个路径读取失败，尝试下一个
+    if target_path:
+        try:
+            with open(target_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get('celebrities', [])
+        except Exception as e:
+            st.error(f"解析 JSON 出错: {e}")
+            return []
+    
+    # 如果还是找不到，打印出当前目录下的文件，帮我们定位
+    st.error(f"文件未找到。当前路径: {os.getcwd()}")
+    try:
+        st.write("当前目录下包含的文件:", os.listdir(os.getcwd()))
+        if os.path.exists("1210"):
+            st.write("1210 文件夹内内容:", os.listdir("1210"))
+    except:
+        pass
+    
+    return []
 
-    # 如果所有路径都失败，返回一个默认值，防止 random.choice 崩溃
-    st.error("🚨 数据加载失败！请确保 1210/data/celebrities.json 存在于 GitHub 仓库中。")
-    return [{"name": "加载失败", "story": "未找到数据文件"}] 
-
-# 获取数据
+# --- 关键修改：防止 random.choice 报错 ---
 celebrities = load_celebrities()
+
+# 如果列表为空，给一个默认值，保证页面不崩
+if not celebrities:
+    celebrities = [{"name": "演示账号", "story": "数据加载中，请稍后..."}]
 
 # 创建标签页
 tab1, tab2, tab3 = st.tabs(["📚 名人探索", "💬 AI对话", "🎨 AI创作"])
