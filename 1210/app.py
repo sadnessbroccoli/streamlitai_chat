@@ -37,33 +37,26 @@ st.markdown("### AI驱动的名人故事探索与对话")
 # 加载数据
 @st.cache_data
 def load_celebrities():
+    # 1. 获取当前脚本 app.py 的绝对路径
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # 2. 无论在本地还是云端，始终在 app.py 同级的 data 文件夹下找
+    file_path = os.path.join(current_dir, 'data', 'celebrities.json')
+    
     try:
-        # 1. 绝对路径定位：获取 app.py 所在的文件夹 (1210 文件夹)
-        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # 调试：在页面上显示当前尝试读取的路径（解决后可删除此行）
+        # st.sidebar.write(f"正在读取路径: {file_path}") 
         
-        # 2. 拼接路径：指向 1210/data/celebrities.json
-        file_path = os.path.join(current_dir, 'data', 'celebrities.json')
-        
-        # 调试用：如果读不到，在网页上打印出它尝试访问的路径
         if not os.path.exists(file_path):
-            st.error(f"⚠️ 文件未找到！请检查 GitHub 路径。当前尝试访问: {file_path}")
+            st.error(f"找不到 JSON 文件，请确认文件已上传至 GitHub。路径: {file_path}")
             return []
 
         with open(file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
-            
-        # 确保返回的是列表
         return data.get('celebrities', [])
-        
     except Exception as e:
-        st.error(f"❌ 加载出错: {str(e)}")
+        st.error(f"读取出错: {e}")
         return []
-
-# 在调用 random.choice 之前，一定要加这个判断防止崩溃
-celebrities = load_celebrities()
-if not celebrities:
-    st.warning("⚠️ 列表为空，正在等待数据加载...")
-    st.stop()  # 停止执行后面的逻辑，直到数据加载成功
 
 # 创建标签页
 tab1, tab2, tab3 = st.tabs(["📚 名人探索", "💬 AI对话", "🎨 AI创作"])
