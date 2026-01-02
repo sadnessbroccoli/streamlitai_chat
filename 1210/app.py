@@ -37,26 +37,37 @@ st.markdown("### AI驱动的名人故事探索与对话")
 # 加载数据
 @st.cache_data
 def load_celebrities():
-    # 1. 获取当前脚本 app.py 的绝对路径
-    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # 获取当前 app.py 的绝对路径
+    current_file_dir = os.path.dirname(os.path.abspath(__file__))
     
-    # 2. 无论在本地还是云端，始终在 app.py 同级的 data 文件夹下找
-    file_path = os.path.join(current_dir, 'data', 'celebrities.json')
+    # 定义所有可能的探测路径
+    # 路径1：云端标准路径 (1210/data/...)
+    # 路径2：基于文件位置的相对路径 (./data/...)
+    # 路径3：绝对根路径
+    possible_paths = [
+        os.path.join(current_file_dir, "data", "celebrities.json"),
+        os.path.join(os.getcwd(), "1210", "data", "celebrities.json"),
+        "1210/data/celebrities.json",
+        "data/celebrities.json"
+    ]
     
-    try:
-        # 调试：在页面上显示当前尝试读取的路径（解决后可删除此行）
-        # st.sidebar.write(f"正在读取路径: {file_path}") 
-        
-        if not os.path.exists(file_path):
-            st.error(f"找不到 JSON 文件，请确认文件已上传至 GitHub。路径: {file_path}")
-            return []
+    for path in possible_paths:
+        if os.path.exists(path):
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    # 只有确保拿到了数据才返回
+                    if data and "celebrities" in data:
+                        return data["celebrities"]
+            except Exception as e:
+                continue # 如果这个路径读取失败，尝试下一个
 
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        return data.get('celebrities', [])
-    except Exception as e:
-        st.error(f"读取出错: {e}")
-        return []
+    # 如果所有路径都失败，返回一个默认值，防止 random.choice 崩溃
+    st.error("🚨 数据加载失败！请确保 1210/data/celebrities.json 存在于 GitHub 仓库中。")
+    return [{"name": "加载失败", "story": "未找到数据文件"}] 
+
+# 获取数据
+celebrities = load_celebrities()
 
 # 创建标签页
 tab1, tab2, tab3 = st.tabs(["📚 名人探索", "💬 AI对话", "🎨 AI创作"])
@@ -282,10 +293,11 @@ with tab3:
     if st.button("✨ 生成故事", type="primary"):
         if selected_for_story == "随机选择":
             import random
-
-            celebrity = random.choice(celebrities)
-        else:
-            celebrity = next((c for c in celebrities if c["name"] == selected_for_story), None)
+            if len(celebrities) > 0:
+                celebrity = random.choice(celebrities)
+            else:
+                st.warning("暂无数据可供随机选择")
+                st.stop()
 
         if celebrity:
             with st.spinner("AI正在创作中..."):
